@@ -4,15 +4,15 @@
 #define M -1
 #define startmap   {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
-                    {-1, -1,  0,  0,  0,   0,  0,  M,  0,  0,  0, -1, -1},  \
+                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},  \
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    { 0,  0,  0,  0,  0,   0,  0,  M,  0,  0,  0,  0,  0},  \
-                    {-1, -1,  0, -1,  M,  -1,  M, -1,  0, -1,  0, -1, -1},  \
-                    { 0,  0,  0,  0,  0,   M,  0,  0,  0,  M,  0,  0,  0},  \
+                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},  \
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    { 0,  0,  0,  0,  0,   M,  0,  M,  0,  M,  0,  0,  0},  \
+                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},  \
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  M,  0, -1, -1},  \
+                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},  \
+                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
+                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1}};
 
@@ -37,7 +37,7 @@ int todo[90][2];
 
 int posx, posy, endx, endy, stationstart, stationend;
 
-void inputs() {
+void InitAssignmentA() {
     printf("Robot position (station no.):  ");
     scanf("%d", &stationstart);
     printf("target position (station no.): ");
@@ -52,6 +52,13 @@ void inputs() {
     printf("endy = %d,  endx = %d \n", endy, endx);
 
 }
+
+/*  Function for multiple inputs (assignment B)
+*   And redo if hit mine
+*/
+
+
+
 void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this better)
     int i, j = 0;
     printf("\n---------------------------------------");
@@ -64,18 +71,6 @@ void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for mak
             else {
                 printf("  %d,", array[i][j]); }
         }
-
-    }
-
-}
-
-void showtodo() { //shows sequential list of cells coords at which to evaluate neighbours
-    int i, j = 0;
-    for(i=0; i<90; i++) {
-        printf("\n");
-        for(j=0; j<2; j++) {
-
-            printf(" %d", todo[i][j]); }
 
     }
 
@@ -123,7 +118,7 @@ int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
         printf("invalid destination");
     }
 
-    while(todo[line][0] != -99) {
+    while(map[posy][posx] == 0){
         handlecell(line);
         line++;
     }
@@ -146,35 +141,6 @@ void relative(int olddir, int posy, int posx) {
     }
 
 }
-
-/*void step() {
-
-    int olddir = dir[posy][posx];
-
-        switch(dir[posy][posx]) {
-
-            case 1:
-                posy-=2;
-                relative(olddir, posy, posx);
-                //printf("north\n");
-                break;
-            case 2:
-                posx+=2;
-                relative(olddir, posy, posx);
-                //printf("east\n");
-                break;
-            case 3:
-                posy+=2;
-                relative(olddir,posy, posx);
-                //printf("south\n");
-                break;
-            case 4:
-                posx-=2;
-                relative(olddir, posy, posx);
-               //printf("west\n");
-                break;
-        }
-}*/
 
 void walk(int starty, int startx){
 
@@ -219,7 +185,7 @@ void walk(int starty, int startx){
 
 int main() {
 
-    inputs();
+    InitAssignmentA();
 
     int i;
     for(i = 0; i < 90; i++) {
@@ -229,18 +195,12 @@ int main() {
 
     calcmaps(endy, endx); // x, y location of target
 
-    //showtodo();
     showmap(map);
     showmap(dir);
     printf("\nprocessed cells: %d\n", processedcells);
 
     walk(posy , posx); //x , y location of robot
 
-    /*while (dir[posy][posx] != 0) {
-        step(posy, posx);
-    }*/
-
-    //printf("arrived\n");
 }
 
 
