@@ -158,102 +158,63 @@ int relative(int olddir, int posy, int posx) { //
 
 }
 
-void step(int steps){ //to be called when the robot reaches a midpoint
+void step(int steps) { //to be called when the robot reaches a midpoint
 
     int olddir = dir[posy][posx];
 
-        switch(olddir) {
+    switch (olddir) {
 
-            case 1:
-                posy-=steps;
-                relative(olddir, posy, posx);
-                //printf("north\n");
-                break;
-            case 2:
-                posx+=steps;
-                relative(olddir, posy, posx);
-                //printf("east\n");
-                break;
-            case 3:
-                posy+=steps;
-                relative(olddir,posy, posx);
-                //printf("south\n");
-                break;
-            case 4:
-                posx-=steps;
-                relative(olddir, posy, posx);
-               //printf("west\n");
-                break;
-        }
-void walk(int starty, int startx){
-
-    int posx = startx;
-    int posy = starty;
-    //int i;
-    //routelength = map[starty][startx]; //number on map directly represents distance to target
-
-    while (dir[posy][posx] != 0) {  //for each i in routelength, get direction of current cell and move accordingly
-
-        int olddir = dir[posy][posx];
-
-        switch(dir[posy][posx]) {
-
-            case 1:
-                posy-=2;
-                relative(olddir, posy, posx);
-                //printf("north\n");
-                break;
-            case 2:
-                posx+=2;
-                relative(olddir, posy, posx);
-                //printf("east\n");
-                break;
-            case 3:
-                posy+=2;
-                relative(olddir,posy, posx);
-                //printf("south\n");
-                break;
-            case 4:
-                posx-=2;
-                relative(olddir, posy, posx);
-                //printf("west\n");
-                break;
-        }
-
+        case 1:
+            posy -= steps;
+            relative(olddir, posy, posx);
+            //printf("north\n");
+            break;
+        case 2:
+            posx += steps;
+            relative(olddir, posy, posx);
+            //printf("east\n");
+            break;
+        case 3:
+            posy += steps;
+            relative(olddir, posy, posx);
+            //printf("south\n");
+            break;
+        case 4:
+            posx -= steps;
+            relative(olddir, posy, posx);
+            //printf("west\n");
+            break;
     }
-
-    printf("arrived\n");
-
 }
 
-int main() {
+    int main() {
 
-    inputs();
+        inputs();
 
-    int i;
-    for(i = 0; i < 90; i++) {
-        todo[i][0] = -99;
-        todo[i][1] = -99;
+        int i;
+        for (i = 0; i < 90; i++) {
+            todo[i][0] = -99;
+            todo[i][1] = -99;
+        }
+
+        calcmaps(endy, endx); // y, x location of target
+
+        //showtodo();
+        //showmap(map);
+        //showmap(dir);
+        printf("\nprocessed cells: %d\n", processedcells);
+
+        //walk(posy , posx); //y , x location of robot
+
+        printf("%d, %d, ", posy, posx);
+        printf("straight\n");
+
+        while (arrived == 0) {
+            step(2);
+        }
+
+        printf("arrived\n");
+
     }
-
-    calcmaps(endy, endx); // y, x location of target
-
-    //showtodo();
-    //showmap(map);
-    //showmap(dir);
-    printf("\nprocessed cells: %d\n", processedcells);
-
-    //walk(posy , posx); //y , x location of robot
-
-    printf("%d, %d, ", posy, posx);
-    printf("straight\n");
-
-    while(arrived == 0) {
-        step(2);
-    }
-
-    printf("arrived\n");
-}
-
 
 
