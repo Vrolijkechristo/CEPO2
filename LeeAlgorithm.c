@@ -4,15 +4,15 @@
 #define M -1
 #define startmap   {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
-                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},  \
+                    {-1, -1,  0,  0,  0,   0,  0,  M,  0,  0,  0, -1, -1},  \
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},  \
+                    { 0,  0,  0,  0,  0,   0,  0,  M,  0,  0,  0,  0,  0},  \
+                    {-1, -1,  0, -1,  M,  -1,  M, -1,  0, -1,  0, -1, -1},  \
+                    { 0,  0,  0,  0,  0,   M,  0,  0,  0,  M,  0,  0,  0},  \
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},  \
+                    { 0,  0,  0,  0,  0,   M,  0,  M,  0,  M,  0,  0,  0},  \
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},  \
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},  \
+                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  M,  0, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1}};
 
@@ -31,13 +31,12 @@ int stationmap[12][2] ={{12, 4},
 
 int map[13][13] = startmap;
 int dir[13][13] = startmap;
-
-int processedcells;
 int todo[90][2];
 
-int posx, posy, endx, endy, stationstart, stationend;
+int processedcells, posx, posy, endx, endy, stationstart, stationend;
+int arrived = 0;
 
-void InitAssignmentA() {
+void inputs() {
     printf("Robot position (station no.):  ");
     scanf("%d", &stationstart);
     printf("target position (station no.): ");
@@ -52,15 +51,8 @@ void InitAssignmentA() {
     printf("endy = %d,  endx = %d \n", endy, endx);
 
 }
-
-/*  Function for multiple inputs (assignment B)
-*   And redo if hit mine
-*/
-
-
-
-void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this better)
-    int i, j = 0;
+void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this more efficient)
+    int i, j;
     printf("\n---------------------------------------");
     for(i=0; i<13; i++) {
         printf("\n");
@@ -71,6 +63,18 @@ void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for mak
             else {
                 printf("  %d,", array[i][j]); }
         }
+
+    }
+
+}
+
+void showtodo() { //shows sequential list of cells coords at which to evaluate neighbours
+    int i, j;
+    for(i=0; i<90; i++) {
+        printf("\n");
+        for(j=0; j<2; j++) {
+
+            printf(" %d", todo[i][j]); }
 
     }
 
@@ -99,10 +103,10 @@ void handlecell(int line) {
 
     int cellnum = map[y][x];
 
-    handleneighbour(x, y +1, cellnum, 1);
-    handleneighbour(x +1, y, cellnum, 4);
-    handleneighbour(x, y -1, cellnum, 3);
-    handleneighbour(x -1, y, cellnum, 2);
+        handleneighbour(x, y +1, cellnum, 1);
+        handleneighbour(x +1, y, cellnum, 4);
+        handleneighbour(x, y -1, cellnum, 3);
+        handleneighbour(x -1, y, cellnum, 2);
 
 }
 
@@ -125,23 +129,62 @@ int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
 
 }
 
-void relative(int olddir, int posy, int posx) {
+int relative(int olddir, int posy, int posx) { //
 
     int newdir = dir[posy][posx];
     printf("%d, %d, ", posy, posx);
 
-    if(newdir == olddir) {
-        printf("straight\n");
+    if(newdir == 0) {
+        arrived = 1;
+        return 1000;
     }
-    if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
-        printf("right\n");
-    }
-    if(newdir == (olddir + 3) || newdir == (olddir -1)) {
-        printf("left\n");
-    }
+
+        if(newdir == olddir) {
+            printf("straight\n");
+            return 1011;
+        }
+        if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
+            printf("right\n");
+            return 1001;
+        }
+        if(newdir == (olddir + 3) || newdir == (olddir -1)) {
+            printf("left\n");
+            return 1010;
+        }
+        if(newdir == (olddir + 2) || newdir == (olddir -2)) {
+            printf("turn180\n");
+            return 1100;
+        }
 
 }
 
+void step(int steps){ //to be called when the robot reaches a midpoint
+
+    int olddir = dir[posy][posx];
+
+        switch(olddir) {
+
+            case 1:
+                posy-=steps;
+                relative(olddir, posy, posx);
+                //printf("north\n");
+                break;
+            case 2:
+                posx+=steps;
+                relative(olddir, posy, posx);
+                //printf("east\n");
+                break;
+            case 3:
+                posy+=steps;
+                relative(olddir,posy, posx);
+                //printf("south\n");
+                break;
+            case 4:
+                posx-=steps;
+                relative(olddir, posy, posx);
+               //printf("west\n");
+                break;
+        }
 void walk(int starty, int startx){
 
     int posx = startx;
@@ -185,7 +228,7 @@ void walk(int starty, int startx){
 
 int main() {
 
-    InitAssignmentA();
+    inputs();
 
     int i;
     for(i = 0; i < 90; i++) {
@@ -193,14 +236,23 @@ int main() {
         todo[i][1] = -99;
     }
 
-    calcmaps(endy, endx); // x, y location of target
+    calcmaps(endy, endx); // y, x location of target
 
-    showmap(map);
-    showmap(dir);
+    //showtodo();
+    //showmap(map);
+    //showmap(dir);
     printf("\nprocessed cells: %d\n", processedcells);
 
-    walk(posy , posx); //x , y location of robot
+    //walk(posy , posx); //y , x location of robot
 
+    printf("%d, %d, ", posy, posx);
+    printf("straight\n");
+
+    while(arrived == 0) {
+        step(2);
+    }
+
+    printf("arrived\n");
 }
 
 
