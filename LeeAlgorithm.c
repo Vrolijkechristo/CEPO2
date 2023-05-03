@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <time.h>
 
 #define M -1
 #define startmap   {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
@@ -31,11 +30,11 @@ int stationmap[12][2] ={{12, 4},
 
 int map[13][13] = startmap;
 int dir[13][13] = startmap;
-
-int processedcells;
 int todo[90][2];
 
-int posx, posy, endx, endy, stationstart, stationend;
+int processedcells, posx, posy, endx, endy, stationstart, stationend;
+int arrived = 0;
+
 
 void inputs() {
     printf("Robot position (station no.):  ");
@@ -52,8 +51,9 @@ void inputs() {
     printf("endy = %d,  endx = %d \n", endy, endx);
 
 }
+
 void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this better)
-    int i, j = 0;
+    int i, j;
     printf("\n---------------------------------------");
     for(i=0; i<13; i++) {
         printf("\n");
@@ -70,7 +70,7 @@ void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for mak
 }
 
 void showtodo() { //shows sequential list of cells coords at which to evaluate neighbours
-    int i, j = 0;
+    int i, j;
     for(i=0; i<90; i++) {
         printf("\n");
         for(j=0; j<2; j++) {
@@ -97,21 +97,7 @@ void handleneighbour(int cellx, int celly, int cellnum, int direction) {
 
 }
 
-void handlecell(int line) {
-
-    int y = todo[line][0];
-    int x = todo[line][1];
-
-    int cellnum = map[y][x];
-
-    handleneighbour(x, y +1, cellnum, 1);
-    handleneighbour(x +1, y, cellnum, 4);
-    handleneighbour(x, y -1, cellnum, 3);
-    handleneighbour(x -1, y, cellnum, 2);
-
-}
-
-int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
+void calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
 
     int line = 0;
 
@@ -124,34 +110,61 @@ int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
     }
 
     while(todo[line][0] != -99) {
-        handlecell(line);
+
+        int y = todo[line][0];
+        int x = todo[line][1];
+
+        int cellnum = map[y][x];
+
+        handleneighbour(x, y +1, cellnum, 1);
+        handleneighbour(x +1, y, cellnum, 4);
+        handleneighbour(x, y -1, cellnum, 3);
+        handleneighbour(x -1, y, cellnum, 2);
         line++;
+
     }
 
 }
 
-void relative(int olddir, int posy, int posx) {
+int relative(int olddir, int posy, int posx) { //
 
     int newdir = dir[posy][posx];
     printf("%d, %d, ", posy, posx);
 
-    if(newdir == olddir) {
-        printf("straight\n");
+    if(newdir == 0) {
+        arrived = 1;
+        return 1000;
     }
-    if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
-        printf("right\n");
-    }
-    if(newdir == (olddir + 3) || newdir == (olddir -1)) {
-        printf("left\n");
-    }
+
+        if(newdir == olddir) {
+            printf("straight\n");
+            return 1011;
+        }
+        if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
+            printf("right\n");
+            return 1001;
+        }
+        if(newdir == (olddir + 3) || newdir == (olddir -1)) {
+            printf("left\n");
+            return 1010;
+        }
+        if(newdir == (olddir + 2) || newdir == (olddir -2)) {
+            printf("turn180\n");
+            return 1100;
+        }
 
 }
 
-/*void step() {
+void step(){ //to be called when the robot reaches a midpoint
 
     int olddir = dir[posy][posx];
 
-        switch(dir[posy][posx]) {
+    if(olddir == 0){
+        printf("trigger");
+    }
+
+
+        switch(olddir) {
 
             case 1:
                 posy-=2;
@@ -174,7 +187,8 @@ void relative(int olddir, int posy, int posx) {
                //printf("west\n");
                 break;
         }
-}*/
+
+}
 
 void walk(int starty, int startx){
 
@@ -229,18 +243,21 @@ int main() {
 
     calcmaps(endy, endx); // x, y location of target
 
-    //showtodo();
+    showtodo();
     showmap(map);
     showmap(dir);
     printf("\nprocessed cells: %d\n", processedcells);
 
-    walk(posy , posx); //x , y location of robot
+    //walk(posy , posx); //x , y location of robot
 
-    /*while (dir[posy][posx] != 0) {
-        step(posy, posx);
-    }*/
+    printf("%d, %d, ", posy, posx);
+    printf("straight\n");
 
-    //printf("arrived\n");
+    while(arrived == 0) {
+        step();
+    }
+
+    printf("arrived\n");
 }
 
 
