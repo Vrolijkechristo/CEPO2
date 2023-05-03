@@ -1,67 +1,68 @@
-//
-// Created by Christo, made by Gyan on 3-5-2023.
-//
-
 #include <stdio.h>
 #include <time.h>
 
-int map[13][13] =  {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},
-                    {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},
-                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},
-                    {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},
+#define M -1
+#define startmap   {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
+                    {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
+                    {-1, -1,  0,  0,  0,   0,  0,  M,  0,  0,  0, -1, -1},  \
+                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
+                    { 0,  0,  0,  0,  0,   0,  0,  M,  0,  0,  0,  0,  0},  \
+                    {-1, -1,  0, -1,  M,  -1,  M, -1,  0, -1,  0, -1, -1},  \
+                    { 0,  0,  0,  0,  0,   M,  0,  0,  0,  M,  0,  0,  0},  \
+                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
+                    { 0,  0,  0,  0,  0,   M,  0,  M,  0,  M,  0,  0,  0},  \
+                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
+                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  M,  0, -1, -1},  \
+                    {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1}};
 
-int dir[13][13] =  {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},
-                    {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},
-                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    { 0,  0,  0,  0,  0,   0,  0,  0,  0,  0,  0,  0,  0},
-                    {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},
-                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},
-                    {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},
-                    {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1}};
+int stationmap[12][2] ={{12, 4},
+                        {12, 6},
+                        {12, 8},
+                        {8, 12},
+                        {6, 12},
+                        {4, 12},
+                        {0, 8},
+                        {0, 6},
+                        {0, 4},
+                        {4, 0},
+                        {6, 0},
+                        {8, 0}};
 
-int processedcells, routelength = 0;
-int todo[90][2] = {};
+int map[13][13] = startmap;
+int dir[13][13] = startmap;
 
-void showmap() { //shows the currect map with data about taxicab distance
-    int i, j = 0;
-    for(i=0; i<13; i++) {
-        printf(";\n");
-        for(j=0; j<13; j++) {
+int processedcells;
+int todo[90][2];
 
-            if(map[i][j] == -1 || map[i][j] >9) {
-                printf(" %d,", map[i][j]); }
-            else {
-                printf("  %d,", map[i][j]); }
-        }
+int posx, posy, endx, endy, stationstart, stationend;
 
-    }
+void inputs() {
+    printf("Robot position (station no.):  ");
+    scanf("%d", &stationstart);
+    printf("target position (station no.): ");
+    scanf("%d,", &stationend);
+
+    posy = stationmap[stationstart -1][0];
+    posx = stationmap[stationstart -1][1];
+    endy = stationmap[stationend   -1][0];
+    endx = stationmap[stationend   -1][1];
+
+    printf("posy = %d,  posx = %d \n", posy, posx);
+    printf("endy = %d,  endx = %d \n", endy, endx);
 
 }
-
-void showdir() { //shows direction map to get from to start coords
+void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this better)
     int i, j = 0;
+    printf("\n---------------------------------------");
     for(i=0; i<13; i++) {
-        printf(";\n");
+        printf("\n");
         for(j=0; j<13; j++) {
 
-            if(map[i][j] == -1) {
-                printf(" %d,", dir[i][j]); }
+            if(array[i][j] == -1 || array[i][j] >9) {
+                printf(" %d,", array[i][j]); }
             else {
-                printf("  %d,", dir[i][j]); }
+                printf("  %d,", array[i][j]); }
         }
 
     }
@@ -110,7 +111,7 @@ void handlecell(int line) {
 
 }
 
-int calcmaps(int endx, int endy) { //returns taxicab distance, fills map and dir
+int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
 
     int line = 0;
 
@@ -119,7 +120,7 @@ int calcmaps(int endx, int endy) { //returns taxicab distance, fills map and dir
     map[endy][endx] = 1;
 
     if(map[endy][endx] == -1) {
-        printf("invalid points");
+        printf("invalid destination");
     }
 
     while(todo[line][0] != -99) {
@@ -129,71 +130,118 @@ int calcmaps(int endx, int endy) { //returns taxicab distance, fills map and dir
 
 }
 
-void walk(int startx, int starty){
+void relative(int olddir, int posy, int posx) {
 
-    int posx = startx;
-    int posy = starty;
-    int i;
-    routelength = map[starty][startx]; //number on map directly represents distance to target
+    int newdir = dir[posy][posx];
+    printf("%d, %d, ", posy, posx);
 
-    for(i = routelength; 0 < i; i--) {  //for each i in routelength, get direction of current cell and move accordingly
-        printf("%d, %d, ", posy, posx);
+    if(newdir == olddir) {
+        printf("straight\n");
+    }
+    if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
+        printf("right\n");
+    }
+    if(newdir == (olddir + 3) || newdir == (olddir -1)) {
+        printf("left\n");
+    }
+
+}
+
+/*void step() {
+
+    int olddir = dir[posy][posx];
+
         switch(dir[posy][posx]) {
 
             case 1:
-                posy--;
-                printf("north\n");
+                posy-=2;
+                relative(olddir, posy, posx);
+                //printf("north\n");
                 break;
             case 2:
-                posx++;
-                printf("east\n");
+                posx+=2;
+                relative(olddir, posy, posx);
+                //printf("east\n");
                 break;
             case 3:
-                posy++;
-                printf("south\n");
+                posy+=2;
+                relative(olddir,posy, posx);
+                //printf("south\n");
                 break;
             case 4:
-                posx--;
-                printf("west\n");
+                posx-=2;
+                relative(olddir, posy, posx);
+               //printf("west\n");
                 break;
-            case 0: //when the zero is reached, destination is reached
-                printf("arrived\n");
+        }
+}*/
 
+void walk(int starty, int startx){
+
+    int posx = startx;
+    int posy = starty;
+    //int i;
+    //routelength = map[starty][startx]; //number on map directly represents distance to target
+
+    while (dir[posy][posx] != 0) {  //for each i in routelength, get direction of current cell and move accordingly
+
+        int olddir = dir[posy][posx];
+
+        switch(dir[posy][posx]) {
+
+            case 1:
+                posy-=2;
+                relative(olddir, posy, posx);
+                //printf("north\n");
+                break;
+            case 2:
+                posx+=2;
+                relative(olddir, posy, posx);
+                //printf("east\n");
+                break;
+            case 3:
+                posy+=2;
+                relative(olddir,posy, posx);
+                //printf("south\n");
+                break;
+            case 4:
+                posx-=2;
+                relative(olddir, posy, posx);
+                //printf("west\n");
+                break;
         }
 
     }
+
+    printf("arrived\n");
 
 }
 
 int main() {
 
-    clock_t start_t, end_t;
-    double total_t;
-    start_t = clock();
+    inputs();
 
     int i;
-
     for(i = 0; i < 90; i++) {
         todo[i][0] = -99;
         todo[i][1] = -99;
     }
 
-    calcmaps(8, 12); // x, y location of target
+    calcmaps(endy, endx); // x, y location of target
 
-    walk(12 , 4);
-    end_t = clock();
-    total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-
-    showtodo();
-    printf("\n---------------------------------------");
-    showmap();
-    printf("\n---------------------------------------");
-    showdir();
-
+    //showtodo();
+    showmap(map);
+    showmap(dir);
     printf("\nprocessed cells: %d\n", processedcells);
 
-    total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-    printf("Total time taken: %.1f us\n\n", total_t*1000000  );
+    walk(posy , posx); //x , y location of robot
 
-    walk(12 , 4); //x , y location of robot
+    /*while (dir[posy][posx] != 0) {
+        step(posy, posx);
+    }*/
+
+    //printf("arrived\n");
 }
+
+
+
