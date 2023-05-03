@@ -216,5 +216,3 @@ void step(int steps) { //to be called when the robot reaches a midpoint
         printf("arrived\n");
 
     }
-
-
