@@ -17,6 +17,7 @@
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1}};
 
 int test;
+int test2;
 int map[13][13] = startmap;
 int dir[13][13] = startmap;
 
