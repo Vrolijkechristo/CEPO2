@@ -35,7 +35,6 @@ int todo[90][2];
 int processedcells, posx, posy, endx, endy, stationstart, stationend;
 int arrived = 0;
 
-
 void inputs() {
     printf("Robot position (station no.):  ");
     scanf("%d", &stationstart);
@@ -52,7 +51,7 @@ void inputs() {
 
 }
 
-void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this better)
+void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this more efficient)
     int i, j;
     printf("\n---------------------------------------");
     for(i=0; i<13; i++) {
@@ -155,34 +154,29 @@ int relative(int olddir, int posy, int posx) { //
 
 }
 
-void step(){ //to be called when the robot reaches a midpoint
+void step(int steps){ //to be called when the robot reaches a midpoint
 
     int olddir = dir[posy][posx];
-
-    if(olddir == 0){
-        printf("trigger");
-    }
-
 
         switch(olddir) {
 
             case 1:
-                posy-=2;
+                posy-=steps;
                 relative(olddir, posy, posx);
                 //printf("north\n");
                 break;
             case 2:
-                posx+=2;
+                posx+=steps;
                 relative(olddir, posy, posx);
                 //printf("east\n");
                 break;
             case 3:
-                posy+=2;
+                posy+=steps;
                 relative(olddir,posy, posx);
                 //printf("south\n");
                 break;
             case 4:
-                posx-=2;
+                posx-=steps;
                 relative(olddir, posy, posx);
                //printf("west\n");
                 break;
@@ -190,46 +184,28 @@ void step(){ //to be called when the robot reaches a midpoint
 
 }
 
-void walk(int starty, int startx){
+/*void mine() { //to be called when robot reaches a mine
 
-    int posx = startx;
-    int posy = starty;
-    //int i;
-    //routelength = map[starty][startx]; //number on map directly represents distance to target
+    switch(dir[posy][posx];) {
 
-    while (dir[posy][posx] != 0) {  //for each i in routelength, get direction of current cell and move accordingly
-
-        int olddir = dir[posy][posx];
-
-        switch(dir[posy][posx]) {
-
-            case 1:
-                posy-=2;
-                relative(olddir, posy, posx);
-                //printf("north\n");
-                break;
-            case 2:
-                posx+=2;
-                relative(olddir, posy, posx);
-                //printf("east\n");
-                break;
-            case 3:
-                posy+=2;
-                relative(olddir,posy, posx);
-                //printf("south\n");
-                break;
-            case 4:
-                posx-=2;
-                relative(olddir, posy, posx);
-                //printf("west\n");
-                break;
-        }
-
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:
+            posy++;
+            relative(olddir,posy, posx);
+            //printf("south\n");
+            break;
+        case 4:
+            posx--;
+            relative(olddir, posy, posx);
+            //printf("west\n");
+            break;
     }
 
-    printf("arrived\n");
 
-}
+}*/
 
 int main() {
 
@@ -241,20 +217,20 @@ int main() {
         todo[i][1] = -99;
     }
 
-    calcmaps(endy, endx); // x, y location of target
+    calcmaps(endy, endx); // y, x location of target
 
-    showtodo();
-    showmap(map);
-    showmap(dir);
+    //showtodo();
+    //showmap(map);
+    //showmap(dir);
     printf("\nprocessed cells: %d\n", processedcells);
 
-    //walk(posy , posx); //x , y location of robot
+    //walk(posy , posx); //y , x location of robot
 
     printf("%d, %d, ", posy, posx);
     printf("straight\n");
 
     while(arrived == 0) {
-        step();
+        step(2);
     }
 
     printf("arrived\n");
