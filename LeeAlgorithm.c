@@ -12,54 +12,49 @@
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
                     { 0,  0,  0,  0,  0,   M,  0,  M,  0,  M,  0,  0,  0},  \
                     {-1, -1,  0, -1,  0,  -1,  0, -1,  0, -1,  0, -1, -1},  \
-                    {-1, -1,  0,  0,  0,   0,  0,  M,  0,  M,  0, -1, -1},  \
+                    {-1, -1,  0,  0,  0,   0,  0,  0,  0,  M,  0, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1}};
 
-int test;
-int test2;
+int stationmap[12][2] ={{12, 4},
+                        {12, 6},
+                        {12, 8},
+                        {8, 12},
+                        {6, 12},
+                        {4, 12},
+                        {0, 8},
+                        {0, 6},
+                        {0, 4},
+                        {4, 0},
+                        {6, 0},
+                        {8, 0}};
+
 int map[13][13] = startmap;
 int dir[13][13] = startmap;
 
-int processedcells, routelength = 0;
-int todo[90][2] = {};
+int processedcells;
+int todo[90][2];
 
-int posx, posy, endx, endy, stationstart, stationstop;
-
-
+int posx, posy, endx, endy, stationstart, stationend;
 
 void inputs() {
     printf("Robot position (station no.):  ");
     scanf("%d", &stationstart);
     printf("target position (station no.): ");
-    scanf("%d,", &stationstop);
-
-    int stationmap[12][2] ={{12, 4},
-                            {12, 6},
-                            {12, 8},
-                            {8, 12},
-                            {6, 12},
-                            {4, 12},
-                            {0, 8},
-                            {0, 6},
-                            {0, 4},
-                            {4, 0},
-                            {6, 0},
-                            {8, 0}};
+    scanf("%d,", &stationend);
 
     posy = stationmap[stationstart -1][0];
     posx = stationmap[stationstart -1][1];
-    endy = stationmap[stationstart -1][0];
-    posx = stationmap[stationstart -1][1];
+    endy = stationmap[stationend   -1][0];
+    endx = stationmap[stationend   -1][1];
 
     printf("posy = %d,  posx = %d \n", posy, posx);
-    printf("target position (station no.): ");
     printf("endy = %d,  endx = %d \n", endy, endx);
-
 
 }
 void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this better)
     int i, j = 0;
+    printf("\n---------------------------------------");
     for(i=0; i<13; i++) {
         printf("\n");
         for(j=0; j<13; j++) {
@@ -116,7 +111,7 @@ void handlecell(int line) {
 
 }
 
-int calcmaps(int endx, int endy) { //returns taxicab distance, fills map and dir
+int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
 
     int line = 0;
 
@@ -181,7 +176,7 @@ void relative(int olddir, int posy, int posx) {
         }
 }*/
 
-void walk(int startx, int starty){
+void walk(int starty, int startx){
 
     int posx = startx;
     int posy = starty;
@@ -226,41 +221,21 @@ int main() {
 
     inputs();
 
-    clock_t start_t, end_t;
-    double total_t;
-    start_t = clock();
-
     int i;
-
     for(i = 0; i < 90; i++) {
         todo[i][0] = -99;
         todo[i][1] = -99;
     }
 
+    calcmaps(endy, endx); // x, y location of target
 
-    /*int checkpoints[3][2] = {{},
-                             {},
-                             {}};*/
-
-    calcmaps(6, 0); // x, y location of target
-
-    end_t = clock();
-    total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-
-    showtodo();
-    printf("\n---------------------------------------");
+    //showtodo();
     showmap(map);
-    printf("\n---------------------------------------");
     showmap(dir);
-
     printf("\nprocessed cells: %d\n", processedcells);
 
-    walk(12 , 4); //x , y location of robot
+    walk(posy , posx); //x , y location of robot
 
-
-    total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-    total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-    printf("Total time taken: %.1f us\n\n", total_t*1000000  );
     /*while (dir[posy][posx] != 0) {
         step(posy, posx);
     }*/
