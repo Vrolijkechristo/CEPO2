@@ -110,7 +110,52 @@ void handlecell(int line) {
 
 }
 
-int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
+int AssignmentA(int Station1, int Station2, int Station3){
+
+}
+
+int CalculateLengthRoute(int Yend, int Xend, int Ybegin, int Xbegin) {
+    // Clean all variables
+    int line = 0;
+    int i, j, g, h;
+    processedcells = 0;
+    for (i = 0; i < 13; i++) {
+        for (j = 0; j < 13; j++) {
+            if (map[i][j] != -1) { // keep all walls (thus already found mines) untouched
+                map[i][j] = 0;
+                dir[i][j] = 0;
+            }
+        }
+    }
+    for (g = 0; g < 90; g++){
+        for (h = 0; h < 2; h++){
+            todo[g][h] = -99;
+        }
+    }
+
+    todo[0][0] = Yend;
+    todo[0][1] = Xend;
+    map[Yend][Xend] = 1;
+
+    while(map[Ybegin][Xbegin] == 0){
+        int y = todo[line][0];
+        int x = todo[line][1];
+
+        int cellnum = map[y][x];
+
+        handleneighbour(x, y +1, cellnum, 1);
+        handleneighbour(x +1, y, cellnum, 4);
+        handleneighbour(x, y -1, cellnum, 3);
+        handleneighbour(x -1, y, cellnum, 2);
+        line++;
+    }
+
+    int Length = map[Ybegin][Xbegin];
+    return Length;
+}
+
+
+int calcmaps(int endy, int endx ) { //returns taxicab distance, fills map and dir
 
     int line = 0;
 
@@ -132,7 +177,7 @@ int calcmaps(int endy, int endx) { //returns taxicab distance, fills map and dir
 int relative(int olddir, int posy, int posx) { //
 
     int newdir = dir[posy][posx];
-    printf("%d, %d, ", posy, posx);
+    printf("%d, %d, %d, ", posy, posx, map[posy][posx]);
 
     if(newdir == 0) {
         arrived = 1;
@@ -206,7 +251,7 @@ void step(int steps) { //to be called when the robot reaches a midpoint
 
         //walk(posy , posx); //y , x location of robot
 
-        printf("%d, %d, ", posy, posx);
+        printf("%d, %d, %d, ", posy, posx, map[posy][posx]);
         printf("straight\n");
 
         while (arrived == 0) {
@@ -214,5 +259,8 @@ void step(int steps) { //to be called when the robot reaches a midpoint
         }
 
         printf("arrived\n");
+
+        //printf("This is the length from station 1 to station 12: %d\n", CalculateLengthRoute(12, 4, 8, 0));
+        //printf("This is the length from station 9 to station 4 : %d\n", CalculateLengthRoute(0, 4, 12, 8));
 
     }
