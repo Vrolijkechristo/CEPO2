@@ -32,6 +32,8 @@ int map[13][13] = startmap;
 int dir[13][13] = startmap;
 int todo[90][2];
 
+int global;
+
 int processedcells, posx, posy, endx, endy, stationstart, stationend, olddir;
 int arrived = 0;
 
@@ -260,6 +262,22 @@ void mine() { //to be called when robot reaches a mine, stores mine pos. in maps
 }
 
 int main() {
+
+
+    /*int i;
+
+    while(1==1) {
+
+        if(i = 100) {
+
+            i = 0;
+            printf("reset");
+
+        }
+
+        i++;
+        global = i;
+    }*/
 
     inputs();
 
