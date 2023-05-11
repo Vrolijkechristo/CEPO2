@@ -1,4 +1,14 @@
 #include <stdio.h>
+#include <Windows.h>
+#include <string.h>
+
+#define COMPORT "COM4"
+#define BAUDRATE CBR_9600
+
+char byteBuffer[BUFSIZ+1];
+
+HANDLE hSerial;
+
 
 #define M -1
 #define startmap   {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
@@ -31,11 +41,80 @@ int stationmap[12][2] ={{12, 4},
 int map[13][13] = startmap;
 int dir[13][13] = startmap;
 int todo[90][2];
-
-int global;
+int dircode;
 
 int processedcells, posx, posy, endx, endy, stationstart, stationend, olddir;
 int arrived = 0;
+
+void initSio(HANDLE hSerial){
+
+    COMMTIMEOUTS timeouts ={0};
+    DCB dcbSerialParams = {0};
+
+    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
+
+    if (!GetCommState(hSerial, &dcbSerialParams)) {
+        //error getting state
+        printf("error getting state \n");
+    }
+
+    dcbSerialParams.BaudRate = BAUDRATE;
+    dcbSerialParams.ByteSize = 8;
+    dcbSerialParams.StopBits = ONESTOPBIT;
+    dcbSerialParams.Parity   = NOPARITY;
+
+    if(!SetCommState(hSerial, &dcbSerialParams)){
+        //error setting serial port state
+        printf("error setting state \n");
+    }
+
+    timeouts.ReadIntervalTimeout = 1000;
+    timeouts.ReadTotalTimeoutConstant = 1000;
+    timeouts.ReadTotalTimeoutMultiplier = 10;
+
+    timeouts.WriteTotalTimeoutConstant = 50;
+    timeouts.WriteTotalTimeoutMultiplier = 10;
+
+    if(!SetCommTimeouts(hSerial, &timeouts)){
+        //error occureed. Inform user
+        printf("error setting timeout state \n");
+    }
+}
+
+//--------------------------------------------------------------
+// Function: readByte
+// Description: reads a single byte from the COM port into
+//              buffer buffRead
+//--------------------------------------------------------------
+int readByte(HANDLE hSerial, char *buffRead) {
+
+    DWORD dwBytesRead = 0;
+
+    if (!ReadFile(hSerial, buffRead, 1, &dwBytesRead, NULL))
+    {
+        printf("error reading byte from input buffer \n");
+    }
+
+    return(0);
+}
+
+//--------------------------------------------------------------
+// Function: writeByte
+// Description: writes a single byte stored in buffRead to
+//              the COM port
+//--------------------------------------------------------------
+int writeByte(HANDLE hSerial, char *buffWrite){
+
+    DWORD dwBytesWritten = 0;
+
+    if (!WriteFile(hSerial, buffWrite, 1, &dwBytesWritten, NULL))
+    {
+        printf("error writing byte to output buffer \n");
+    }
+    printf("Byte written to write buffer is: %x \n", buffWrite[0]);
+
+    return(0);
+}
 
 void inputs() {
     printf("Robot position (station no.):  ");
@@ -147,28 +226,40 @@ int relative(int olddir, int posy, int posx) { //
 
     if(newdir == 0) {
         arrived = 1;
+        printf("arrived\n");
+        byteBuffer[0] = 0x00;
+        writeByte(hSerial, byteBuffer);
         return 1000;
     }
 
     if(newdir == olddir) {
         printf("straight\n");
+        byteBuffer[0] = 0x60;
+        writeByte(hSerial, byteBuffer);
         return 1011;
     }
     if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
         printf("right\n");
+        byteBuffer[0] = 0x20;
+        writeByte(hSerial, byteBuffer);
         return 1001;
     }
     if(newdir == (olddir + 3) || newdir == (olddir -1)) {
         printf("left\n");
+        byteBuffer[0] = 0x40;
+        writeByte(hSerial, byteBuffer);
         return 1010;
     }
     if(newdir == (olddir + 2) || newdir == (olddir -2)) {
         printf("turn180\n");
+        byteBuffer[0] = 0x80;
+        writeByte(hSerial, byteBuffer);
         return 1100;
     }
+
 }
 
-void step(int steps, int minefound, int currentdir) { //to be called when the robot reaches a midpoint
+int step(int steps, int minefound, int currentdir) { //to be called when the robot reaches a midpoint
 
     if(minefound == 1) {
         olddir = currentdir;
@@ -254,30 +345,51 @@ void mine() { //to be called when robot reaches a mine, stores mine pos. in maps
     calcmaps(endy, endx);
     //showtodo();
     //showmap(map);
-    showmap(dir);
-    //printf("processed cells: %d\n", processedcells);
+    //showmap(dir);
+    printf("processed cells: %d\n", processedcells);
 
     step(0, 1, currentdir);
 
 }
 
-int main() {
+/*int getdata() {
 
+    while ( 1 ) {
+        gets(byteBuffer);
 
-    /*int i;
+        if (byteBuffer[0] == 'q') // end the loop by typing 'q'
+            break;
 
-    while(1==1) {
+        writeByte(hSerial, byteBuffer);
+        readByte(hSerial, byteBuffer);
+    }
 
-        if(i = 100) {
+    printf("ZIGBEE IO DONE!\n");
+    return 0;
 
-            i = 0;
-            printf("reset");
+}*/
 
+void main() {
+
+    hSerial = CreateFile(COMPORT,
+                         GENERIC_READ | GENERIC_WRITE,
+                         0,
+                         0,
+                         OPEN_EXISTING,
+                         FILE_ATTRIBUTE_NORMAL,
+                         0
+    );
+
+    if(hSerial == INVALID_HANDLE_VALUE){
+        if(GetLastError()== ERROR_FILE_NOT_FOUND){
+            //serial port does not exist. Inform user.
+            printf(" serial port does not exist \n");
         }
+        //some other error occurred. Inform user.
+        printf(" some other error occured. Inform user.\n");
+    }
 
-        i++;
-        global = i;
-    }*/
+    initSio(hSerial);
 
     inputs();
 
@@ -294,30 +406,47 @@ int main() {
     //showmap(dir);
     printf("processed cells: %d\n", processedcells);
 
-    printf("%d, %d, ", posy, posx);
-    printf("straight\n");
-
-        step(2,0,0);
-        mine();
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
-        mine();
-        mine();
-        mine();
-        step(2,0,0);
-        mine();
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
-        step(2,0,0);
 
 
-    printf("stop\n");
+    while(arrived == 0) {
+
+        if readByte(hSerial, byteBuffer);
+
+        if(byteBuffer[0] == 0x20) {
+            printf("Mine!\n");
+            mine();
+            byteBuffer[0] = 0x00;
+        }
+        if(byteBuffer[0] == 0x40) {
+            printf("Midpoint!\n");
+            step(2, 0, 0);
+            byteBuffer[0] = 0x00;
+        }
+
+    }
+
+    /*step(2,0,0);
+    mine();
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+    mine();
+    mine();
+    mine();
+    step(2,0,0);
+    mine();
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+    step(2,0,0);
+
+    printf("stop\n");*/
 
 }
+
+
