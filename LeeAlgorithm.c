@@ -73,20 +73,44 @@ int relative() { //
     }
 
         if(newdir == olddir) {
-            printf("straight\n");
-            return 1011;
+            if(arrived){
+                printf("turn180\n");
+                return 1100;
+            }
+            else {
+                printf("straight\n");
+                return 1011;
+            }
         }
         if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
-            printf("right\n");
-            return 1001;
+            if(arrived){
+                printf("left\n");
+                return 1010;
+            }
+            else {
+                printf("right\n");
+                return 1001;
+            }
         }
         if(newdir == (olddir + 3) || newdir == (olddir -1)) {
-            printf("left\n");
-            return 1010;
+            if(arrived){
+                printf("right\n");
+                return 1001;
+            }
+            else {
+                printf("left\n");
+                return 1010;
+            }
         }
         if(newdir == (olddir + 2) || newdir == (olddir -2)) {
-            printf("turn180\n");
-            return 1100;
+            if(arrived){
+                printf("straight\n");
+                return 1011;
+            }
+            else {
+                printf("turn180\n");
+                return 1100;
+            }
         }
 
 }
@@ -162,6 +186,7 @@ int CalculateLengthRoute(int Yend, int Xend, int Ybegin, int Xbegin) {
 int CheckPointCheck(int Y, int X, int Station, int Stat){
     if (posy == Y && posx == X){
         Stat = 1;
+        arrived = 1;
         if (orderA[0] == Station){
             CalculateLengthRoute(stationmap[orderA[1] - 1][0], stationmap[orderA[1] - 1][1],
                                  stationmap[orderA[0] - 1][0], stationmap[orderA[0] - 1][1]);
@@ -239,6 +264,7 @@ int AssignmentA(int StationStart) {
         Stat2 = CheckPointCheck(Y2, X2, Station2, Stat2);
         Stat3 = CheckPointCheck(Y3, X3, Station3, Stat3);
         step(2, 0, 0);
+        arrived = 0;
     }
 
     printf("Arrived");
