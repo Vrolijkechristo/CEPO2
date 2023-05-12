@@ -5,10 +5,6 @@
 #define COMPORT "COM4"
 #define BAUDRATE CBR_9600
 
-char byteBuffer[BUFSIZ+1];
-
-HANDLE hSerial;
-
 #define startmap   {{-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1,  0,  0,  0,   0,  0,  0,  0,  0,  0, -1, -1},  \
@@ -23,7 +19,7 @@ HANDLE hSerial;
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1},  \
                     {-1, -1, -1, -1,  0,  -1,  0, -1,  0, -1, -1, -1, -1}};
 
-int stationmap[12][2] ={{12, 4},
+int stationmap[12][2] ={{12, 4}, //lookup table for station coords
                         {12, 6},
                         {12, 8},
                         {8, 12},
@@ -36,19 +32,18 @@ int stationmap[12][2] ={{12, 4},
                         {6, 0},
                         {8, 0}};
 
+char byteBuffer[BUFSIZ+1];
+HANDLE hSerial;
+
 int map[13][13] = startmap;
 int dir[13][13] = startmap;
 int todo[90][2];
 int orderA[3];
-int olddir;
 
 int Y1, Y2, Y3, X1, X2, X3;
-int Stat1 = 0;
-int Stat2 = 0;
-int Stat3 = 0;
+int Stat1, Stat2, Stat3 = 0;
 int Station1, Station2, Station3;
 int StationStart = 1;
-
 
 int processedcells, posx, posy;
 int arrived = 0;
@@ -83,7 +78,7 @@ void initSio(HANDLE hSerial){
     timeouts.WriteTotalTimeoutMultiplier = 10;
 
     if(!SetCommTimeouts(hSerial, &timeouts)){
-        //error occureed. Inform user
+        //error occurred. Inform user
         printf("error setting timeout state \n");
     }
 }
@@ -113,7 +108,7 @@ int writeByte(HANDLE hSerial, char *buffWrite){
     return(0);
 }
 
-void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for making this more efficient)
+void showmap(int array[13][13]) { //shows the map's data (loveyou Chisto for making this more efficient)
     int i, j;
     printf("\n---------------------------------------");
     for(i=0; i<13; i++) {
@@ -128,6 +123,18 @@ void showmap(int array[13][13]) { //shows the map's data (loveyou chisto for mak
     printf("\n");
 }
 
+void showtodo() { //shows sequential list of cells coords at which to evaluate neighbours
+    int i, j;
+    for(i=0; i<90; i++) {
+        printf("\n");
+        for(j=0; j<2; j++) {
+
+            printf(" %d", todo[i][j]); }
+
+    }
+
+}
+
 void handleneighbour(int cellx, int celly, int cellnum, int direction) {
     if(map[celly][cellx] == 0 && -1 < cellx && cellx < 13 && -1 < celly && celly < 13) {
         map[celly][cellx] = cellnum + 1;
@@ -138,89 +145,55 @@ void handleneighbour(int cellx, int celly, int cellnum, int direction) {
     }
 }
 
-int relative(int olddir, int posy, int posx) { //
+int relative(int olddir) { //converts compass directions from dir to relative directions
 
-    int newdir = dir[posy][posx];
+    int newdir = dir[posy][posx]; //dirnum after move
     printf("%d, %d, %d, ", posy, posx, map[posy][posx]);
 
     if(newdir == 0) {
         arrived = 1;
         printf("arrived\n");
-        byteBuffer[0] = 0x00;
-        writeByte(hSerial, byteBuffer);
-        return 1000;
+        return 1; //jump out of relative function, return value of no significance
+    }
+
+    if (arrived) { //inverts directions for one step after station reached to fix error
+        newdir = (newdir + 1) % 4 + 1;
+        arrived = 0;
     }
 
     if(newdir == olddir) {
         printf("straight\n");
         byteBuffer[0] = 0x60;
         writeByte(hSerial, byteBuffer);
-        return 1011;
+        return 0;
     }
     if(newdir == (olddir + 1) || newdir == (olddir - 3)) {
         printf("right\n");
         byteBuffer[0] = 0x20;
         writeByte(hSerial, byteBuffer);
-        return 1001;
+        return 0;
     }
     if(newdir == (olddir + 3) || newdir == (olddir -1)) {
         printf("left\n");
         byteBuffer[0] = 0x40;
         writeByte(hSerial, byteBuffer);
-        return 1010;
+        return 0;
     }
     if(newdir == (olddir + 2) || newdir == (olddir -2)) {
         printf("turn180\n");
         byteBuffer[0] = 0x80;
         writeByte(hSerial, byteBuffer);
-        return 1100;
+        return 0;
     }
 
 }
 
-int step(int steps, int minefound, int currentdir) { //to be called when the robot reaches a midpoint
-
-    if(minefound == 1) {
-        olddir = currentdir;
-    }
-    else {
-        olddir = dir[posy][posx];
-    }
-
-    switch (olddir) {
-
-        case 1:
-            posy -= steps;
-            relative(olddir, posy, posx);
-            //printf("north\n");
-            break;
-        case 2:
-            posx += steps;
-            relative(olddir, posy, posx);
-            //printf("east\n");
-            break;
-        case 3:
-            posy += steps;
-            relative(olddir, posy, posx);
-            //printf("south\n");
-            break;
-        case 4:
-            posx -= steps;
-            relative(olddir, posy, posx);
-            //printf("west\n");
-            break;
-
-    }
-
-}
-
-
-// Willen we dat de volgorde van de punten elke keer als er een mijn gevonden word opnieuw word berekend of niet:
 int CalculateLengthRoute(int Yend, int Xend, int Ybegin, int Xbegin) {
     // Clean all variables
     int line = 0;
-    int i, j, g, h;
+    int i, j;
     processedcells = 0;
+
     for (i = 0; i < 13; i++) {
         for (j = 0; j < 13; j++) {
             if (map[i][j] != -1) { // keep all walls (thus already found mines) untouched
@@ -229,6 +202,7 @@ int CalculateLengthRoute(int Yend, int Xend, int Ybegin, int Xbegin) {
             }
         }
     }
+
     for (i = 0; i < 90; i++){
         for (j = 0; j < 2; j++){
             todo[i][j] = -99;
@@ -248,30 +222,11 @@ int CalculateLengthRoute(int Yend, int Xend, int Ybegin, int Xbegin) {
         handleneighbour(x, y -1, cellnum, 3);
         handleneighbour(x -1, y, cellnum, 2);
         line++;
+
     }
 
     int Length = map[Ybegin][Xbegin];
     return Length;
-}
-
-int CheckPointCheck(int Y, int X, int Station, int Stat){
-    if (posy == Y && posx == X){
-        Stat = 1;
-        if (orderA[0] == Station){
-            CalculateLengthRoute(stationmap[orderA[1] - 1][0], stationmap[orderA[1] - 1][1],
-                                 stationmap[orderA[0] - 1][0], stationmap[orderA[0] - 1][1]);
-            showmap(map);
-        }
-        else if (orderA[1] == Station){
-            CalculateLengthRoute(stationmap[orderA[2] - 1][0], stationmap[orderA[2] - 1][1],
-                                 stationmap[orderA[1] - 1][0], stationmap[orderA[1] - 1][1]);
-            showmap(map);
-        }
-        else{
-            arrived = 1;
-        }
-    }
-    return Stat;
 }
 
 void CheckLengthRouteVersus(int len1, int len2, int len3, int len4, int len5, int Sta1, int Sta2, int Sta3){
@@ -297,9 +252,6 @@ void makemap() {
     Y3 = stationmap[Station3 - 1][0];
     X3 = stationmap[Station3 - 1][1];
 
-    posy = stationmap[StationStart - 1][0];
-    posx = stationmap[StationStart - 1][1];
-
     int lenS1 = CalculateLengthRoute(Y1, X1, posy, posx);
     int lenS2 = CalculateLengthRoute(Y2, X2, posy, posx);
     int lenS3 = CalculateLengthRoute(Y3, X3, posy, posx);
@@ -323,43 +275,102 @@ void makemap() {
 
 }
 
-void mine() { //to be called when robot reaches a mine, stores mine pos. in maps, recalcs route, creates next direction command
+void step(int minefound) { //to be called when the robot reaches a midpoint
 
-    int currentdir = dir[posy][posx];
+    int olddir = dir[posy][posx];
+    int steps = 2;
 
-    switch(currentdir) {
+    if(minefound == 1) {
+
+        switch(olddir) {
+
+            case 1:
+                map[posy -1][posx] = -1;
+                dir[posy -1][posx] = -1;
+                printf("\nMine found at %d, %d while driving NORTH: \n", posy -1, posx);
+                break;
+            case 2:
+                map[posy][posx +1] = -1;
+                dir[posy][posx +1] = -1;
+                printf("\nMine found at %d, %d while driving EAST: \n", posy, posx +1);
+                break;
+            case 3:
+                map[posy +1][posx] = -1;
+                dir[posy +1][posx] = -1;
+                printf("\nMine found at %d, %d while driving SOUTH: \n", posy +1, posx);
+                break;
+            case 4:
+                map[posy][posx -1] = -1;
+                dir[posy][posx -1] = -1;
+                printf("\nMine found at %d, %d while driving WEST: \n", posy, posx -1);
+                break;
+            default:
+                break;
+
+        }
+
+        makemap();
+        //showtodo();
+        showmap(map);
+        //showmap(dir);
+        printf("processed cells: %d\n", processedcells);
+
+        steps = 0;
+
+    }
+
+    switch (olddir) {
 
         case 1:
-            map[posy -1][posx] = -1;
-            dir[posy -1][posx] = -1;
-            printf("\nMine found at %d, %d while driving NORTH: \n", posy -1, posx);
+            posy -= steps;
+            relative(olddir);
             break;
         case 2:
-            map[posy][posx +1] = -1;
-            dir[posy][posx +1] = -1;
-            printf("\nMine found at %d, %d while driving EAST: \n", posy, posx +1);
+            posx += steps;
+            relative(olddir);
             break;
         case 3:
-            map[posy +1][posx] = -1;
-            dir[posy +1][posx] = -1;
-            printf("\nMine found at %d, %d while driving SOUTH: \n", posy +1, posx);
+            posy += steps;
+            relative(olddir);
             break;
         case 4:
-            map[posy][posx -1] = -1;
-            dir[posy][posx -1] = -1;
-            printf("\nMine found at %d, %d while driving WEST: \n", posy, posx -1);
+            posx -= steps;
+            relative(olddir);
+            break;
+        default: //else clangtidy gets upset
             break;
 
     }
 
-    makemap();
-    //showtodo();
-    //showmap(map);
-    //showmap(dir);
-    printf("processed cells: %d\n", processedcells);
+}
 
-    step(0, 1, currentdir);
+int CheckPointCheck(int Y, int X, int Station, int Stat){
+    if (posy == Y && posx == X){
+        Stat = 1;
 
+        if (orderA[0] == Station){
+            CalculateLengthRoute(stationmap[orderA[1] - 1][0], stationmap[orderA[1] - 1][1],
+                                 stationmap[orderA[0] - 1][0], stationmap[orderA[0] - 1][1]);
+            showmap(map);
+            showmap(dir);
+            printf("reached station 1\n\n");
+            step(0);
+            byteBuffer[0] = 0x00;
+        }
+        else if (orderA[1] == Station){
+            CalculateLengthRoute(stationmap[orderA[2] - 1][0], stationmap[orderA[2] - 1][1],
+                                 stationmap[orderA[1] - 1][0], stationmap[orderA[1] - 1][1]);
+            showmap(map);
+            showmap(dir);
+            printf("reached station 2\n\n");
+            step(0);
+            byteBuffer[0] = 0x00;
+        }
+        else{
+            arrived = 1;
+        }
+    }
+    return Stat;
 }
 
 int AssignmentAB() {
@@ -371,13 +382,12 @@ int AssignmentAB() {
     printf("Goal 3 position (station no.):  ");
     scanf("%d", &Station3);
 
+    posy = stationmap[StationStart - 1][0];
+    posx = stationmap[StationStart - 1][1];
+
     makemap();
 
-    while ((Stat1 != 1) || (Stat2 != 1) || (Stat3 != 1)) {
-
-        Stat1 = CheckPointCheck(Y1, X1, Station1, Stat1);
-        Stat2 = CheckPointCheck(Y2, X2, Station2, Stat2);
-        Stat3 = CheckPointCheck(Y3, X3, Station3, Stat3);
+    while (!arrived) {
 
         readByte(hSerial, byteBuffer);
 
@@ -385,7 +395,8 @@ int AssignmentAB() {
             printf("Mine!\n");
             byteBuffer[0] = 0x10;
             writeByte(hSerial, byteBuffer); //ack
-            mine();
+
+            step(1);
             byteBuffer[0] = 0x00;
             printf("\n");
         }
@@ -393,7 +404,11 @@ int AssignmentAB() {
             printf("Midpoint!\n");
             byteBuffer[0] = 0x10;
             writeByte(hSerial, byteBuffer); //ack
-            step(2, 0, 0);
+
+            step(0);
+            Stat1 = CheckPointCheck(Y1, X1, Station1, Stat1);
+            Stat2 = CheckPointCheck(Y2, X2, Station2, Stat2);
+            Stat3 = CheckPointCheck(Y3, X3, Station3, Stat3);
             byteBuffer[0] = 0x00;
             printf("\n");
         }
